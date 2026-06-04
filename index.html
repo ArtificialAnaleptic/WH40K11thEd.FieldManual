@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WH40K 11th Ed — Field Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════
+     DESIGN TOKENS
+  ═══════════════════════════════════════════ */
+  :root {
+    --gold: #c9922a;
+    --gold-bright: #e8b44a;
+    --gold-dim: #7a5519;
+    --red: #8b1a1a;
+    --red-bright: #c0392b;
+    --bg-deep: #0d0b09;
+    --bg-dark: #141210;
+    --bg-mid: #1c1915;
+    --bg-panel: #201d18;
+    --bg-card: #252017;
+    --border-gold: rgba(201,146,42,0.35);
+    --border-bright: rgba(232,180,74,0.6);
+    --text-primary: #e8dfc8;
+    --text-muted: #8a7d68;
+    --text-gold: #c9922a;
+    --text-bright: #f0e8d0;
+    --cp-blue: #2a6080;
+    --cp-blue-bright: #4a90b8;
+    --serif: 'Cinzel', serif;
+    --body: 'Crimson Text', serif;
+    --mono: 'Share Tech Mono', monospace;
+
+    /* ── Typography scale: minimum 12px rendered ── */
+    --text-xs:   0.75rem;   /* 12px — absolute floor */
+    --text-sm:   0.8125rem; /* 13px — labels, badges */
+    --text-base: 0.9375rem; /* 15px — body copy */
+    --text-md:   1rem;      /* 16px — prominent body */
+    --text-lg:   1.0625rem; /* 17px — section titles */
+
+    /* ── Safe-area-aware bottom offset ── */
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Phase bar height: 64px content + safe area */
+    --bar-height: calc(64px + var(--safe-bottom));
+  }
+
+  /* ═══════════════════════════════════════════
+     RESET & BASE
+  ═══════════════════════════════════════════ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Use dvh where supported so the bar doesn't hide behind the address bar;
+     fall back to 100vh on older browsers */
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    /* Prevent double-tap zoom on buttons without removing pinch-zoom */
+    touch-action: manipulation;
+  }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--body);
+    font-size: var(--text-base);
+    line-height: 1.65;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent; /* suppress grey flash on tap */
+    -webkit-text-size-adjust: 100%;           /* prevent iOS auto font inflation */
+  }
+
+  /* ── SCANLINE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ═══════════════════════════════════════════
+     SCREENS
+  ═══════════════════════════════════════════ */
+  .screen {
+    display: none;
+    /* Use dvh so content clears the address bar; add bar height for phase screens */
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-bottom: var(--bar-height);
+    animation: fadeIn 0.25s ease;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── HOME screen uses flex ── */
+  #screen-home {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    background: var(--bg-deep);
+    /* Home has no phase bar, so only needs safe-area padding at bottom */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  #screen-home.active { display: flex; }
+
+  /* ═══════════════════════════════════════════
+     HOME — HEADER
+  ═══════════════════════════════════════════ */
+  .home-header {
+    width: 100%;
+    text-align: center;
+    padding: 2.5rem 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--border-gold);
+    background: var(--bg-dark);
+    position: relative;
+    overflow: hidden;
+  }
+  .home-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,146,42,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .aquila {
+    font-size: 3rem;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.75rem;
+    filter: drop-shadow(0 0 12px rgba(201,146,42,0.4));
+  }
+
+  .home-title {
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 5vw, 1.55rem);
+    font-weight: 700;
+    color: var(--gold-bright);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+  }
+
+  .home-subtitle {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — pure label, never body copy */
+    color: var(--text-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* ── HOME — NAV LIST ── */
+  .home-nav {
+    width: 100%;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .home-section-label {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — section divider label */
+    color: var(--text-muted);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 0.75rem 0 0.3rem;
+    border-top: 1px solid rgba(201,146,42,0.15);
+    margin-top: 0.5rem;
+  }
+  .home-section-label:first-child { border-top: none; margin-top: 0; }
+
+  /* Touch target: minimum 48px tall per WCAG 2.5.5 */
+  .phase-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-gold);
+    border-left: 3px solid var(--gold-dim);
+    color: var(--text-primary);
+    font-family: var(--serif);
+    font-size: var(--text-base); /* 15px — was 0.85rem (13.6px) */
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    text-align: left;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase-btn::after {
+    content: '›';
+    position: absolute;
+    right: 1rem;
+    font-size: 1.25rem;
+    color: var(--gold-dim);
+    transition: right 0.18s, color 0.18s;
+  }
+  .phase-btn:hover, .phase-btn:active {
+    background: var(--bg-panel);
+    border-left-color: var(--gold-bright);
+    color: var(--gold-bright);
+  }
+  .phase-btn:active::after { right: 0.75rem; color: var(--gold-bright); }
+
+  .phase-btn .phase-num {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — roman numeral badge */
+    color: var(--gold-dim);
+    width: 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .ref-btn {
+    border-left-color: var(--red);
+    background: rgba(139,26,26,0.12);
+    border-color: rgba(139,26,26,0.4);
+  }
+  .ref-btn:hover, .ref-btn:active {
+    background: rgba(139,26,26,0.2);
+    border-left-color: var(--red-bright);
+    color: var(--red-bright);
+  }
+  .ref-btn::after { color: rgba(139,26,26,0.6); }
+
+  .cp-badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — pill badge */
+    color: var(--cp-blue-bright);
+    background: rgba(42,96,128,0.2);
+    border: 1px solid rgba(74,144,184,0.3);
+    padding: 0.15rem 0.45rem;
+    margin-left: 0.3rem;
+  }
+
+  /* ═══════════════════════════════════════════
+     PHASE PAGES — HEADER
+  ═══════════════════════════════════════════ */
+  .page-header {
+    padding: 1rem 1.25rem 0.875rem;
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border-gold);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Touch target: 44px tall */
+  .page-back {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — breadcrumb */
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 0.3rem;
+    margin-bottom: 0.25rem;
+    transition: color 0.18s;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .page-back:hover, .page-back:active { color: var(--gold-bright); }
+  .page-back::before { content: '‹ '; }
+
+  .page-title {
+    font-family: var(--serif);
+    font-size: clamp(1rem, 3.8vw, 1.3rem);
+    font-weight: 700;
+    color: var(--gold-bright);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .page-phase-indicator {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — "Phase N of 5" label */
+    color: var(--text-muted);
+    letter-spacing: 0.18em;
+    margin-top: 0.15rem;
+  }
+
+  .page-content {
+    padding: 1rem 1.25rem 1.5rem;
+  }
+
+  /* ═══════════════════════════════════════════
+     SECTION CARDS
+  ═══════════════════════════════════════════ */
+  .section-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-gold);
+    border-top: 2px solid var(--gold-dim);
+    padding: 1rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: var(--text-sm);  /* 13px — was 0.8rem (12.8px), just lifts it clearly above floor */
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.625rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-gold);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .subsection-title {
+    font-family: var(--serif);
+    font-size: var(--text-xs);  /* 12px — internal label */
+    font-weight: 600;
+    color: var(--text-gold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0.75rem 0 0.35rem;
+  }
+  .subsection-title:first-child { margin-top: 0; }
+
+  p { margin-bottom: 0.5rem; font-size: var(--text-base); }
+  p:last-child { margin-bottom: 0; }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.5rem;
+  }
+  ul li {
+    padding: 0.2rem 0 0.2rem 1.1rem;
+    position: relative;
+    font-size: var(--text-base);
+    line-height: 1.55;
+  }
+  ul li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--gold-dim);
+  }
+
+  /* ── WARNING BOXES ── */
+  .warn-box {
+    background: rgba(139,26,26,0.15);
+    border-left: 3px solid var(--red);
+    border-top: 1px solid rgba(139,26,26,0.3);
+    border-bottom: 1px solid rgba(139,26,26,0.3);
+    border-right: 1px solid rgba(139,26,26,0.2);
+    padding: 0.6rem 0.875rem;
+    margin: 0.6rem 0;
+    font-size: var(--text-base);
+    color: #d4876a;
+  }
+  .warn-box strong {
+    color: #e8a080;
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — "⚠ LABEL" header */
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  /* ── MOVE TYPE GRID ── */
+  .move-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+  .move-tile {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-gold);
+    padding: 0.65rem 0.75rem;
+  }
+  .move-tile .move-name {
+    font-family: var(--serif);
+    font-size: var(--text-xs);  /* 12px — tile header */
+    font-weight: 600;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.2rem;
+  }
+  .move-tile .move-stat {
+    font-family: var(--mono);
+    font-size: var(--text-sm);  /* 13px — stat value */
+    color: var(--gold);
+    margin-bottom: 0.2rem;
+  }
+  .move-tile p {
+    font-size: var(--text-xs);  /* 12px — tile body is the exception; very short phrases */
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  /* ── WOUND TABLE ── */
+  .wound-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: var(--text-sm);  /* 13px — was 0.78rem (12.5px) */
+    margin: 0.5rem 0;
+  }
+  .wound-table th {
+    background: var(--bg-panel);
+    color: var(--gold);
+    font-size: var(--text-xs);  /* 12px — column header label */
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--border-gold);
+    text-align: left;
+  }
+  .wound-table td {
+    padding: 0.4rem 0.7rem;
+    border: 1px solid rgba(201,146,42,0.15);
+    color: var(--text-primary);
+  }
+  .wound-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .wound-table .result {
+    color: var(--gold-bright);
+    font-weight: 600;
+  }
+
+  /* ── ATTACK SEQUENCE ── */
+  .attack-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0.5rem 0;
+  }
+  .attack-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.7rem 0.875rem;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-gold);
+    border-bottom: none;
+    position: relative;
+  }
+  .attack-step:last-child { border-bottom: 1px solid var(--border-gold); }
+  .attack-step-num {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — step number badge */
+    color: var(--bg-dark);
+    background: var(--gold-dim);
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .attack-step-name {
+    font-family: var(--serif);
+    font-size: var(--text-xs);  /* 12px — step name */
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.2rem;
+  }
+  .attack-step p {
+    font-size: var(--text-sm);  /* 13px — step description */
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ═══════════════════════════════════════════
+     STRATAGEM CARDS
+  ═══════════════════════════════════════════ */
+  .strat-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(74,144,184,0.3);
+    border-top: 2px solid var(--cp-blue);
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.625rem;
+  }
+  .strat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .strat-name {
+    font-family: var(--serif);
+    font-size: var(--text-sm);  /* 13px — was 0.8rem (12.8px) */
+    font-weight: 700;
+    color: var(--cp-blue-bright);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .strat-cost {
+    font-family: var(--mono);
+    font-size: var(--text-sm);  /* 13px — CP badge */
+    color: var(--bg-dark);
+    background: var(--cp-blue);
+    padding: 0.15rem 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .strat-timing {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — "Yours / Theirs / Either" row */
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .strat-timing .turn-badge {
+    font-size: var(--text-xs);  /* 12px — coloured pill */
+    padding: 0.15rem 0.45rem;
+    border: 1px solid;
+  }
+  .turn-your {
+    color: #5ab85a;
+    border-color: rgba(74,155,74,0.45);
+    background: rgba(74,155,74,0.12);
+  }
+  .turn-opp {
+    color: #c87840;
+    border-color: rgba(176,96,48,0.45);
+    background: rgba(176,96,48,0.12);
+  }
+  .turn-both {
+    color: var(--cp-blue-bright);
+    border-color: rgba(74,144,184,0.45);
+    background: rgba(74,144,184,0.12);
+  }
+  .strat-card p { font-size: var(--text-base); color: var(--text-primary); margin-bottom: 0.35rem; }
+
+  /* ── CORE ABILITY LIST ── */
+  .ability-item {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(201,146,42,0.12);
+  }
+  .ability-item:last-child { border-bottom: none; }
+  .ability-keyword {
+    font-family: var(--mono);
+    font-size: var(--text-sm);  /* 13px — was 0.72rem (11.5px) — CRITICAL FIX */
+    color: var(--gold-bright);
+    letter-spacing: 0.06em;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ability-keyword .kw-bracket {
+    color: var(--gold-dim);
+  }
+  .ability-desc {
+    font-size: var(--text-base);  /* 15px — was 0.83rem (13.3px); lift body copy */
+    color: var(--text-primary);
+    line-height: 1.55;
+  }
+
+  /* ═══════════════════════════════════════════
+     BOTTOM PHASE BAR
+     FIX: use dvh-aware height, env() safe area, 
+     and proper content clearance on screens
+  ═══════════════════════════════════════════ */
+  #phase-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-dark);
+    border-top: 1px solid var(--border-gold);
+    z-index: 100;
+    display: none;
+    /* top padding = visual chrome; bottom = safe area for home indicator */
+    padding: 0.6rem 0.875rem 0;
+    padding-bottom: calc(0.5rem + var(--safe-bottom));
+  }
+  #phase-bar.visible { display: block; }
+
+  .phase-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Touch target: each pip must be ≥44px; use min-height not padding hacks */
+  .phase-pip {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.2rem;
+    min-height: 44px;
+    padding: 0.25rem 0.1rem;
+    justify-content: center;
+    transition: all 0.18s;
+    position: relative;
+  }
+  .phase-pip .pip-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--gold-dim);
+    transition: all 0.18s;
+  }
+  .phase-pip .pip-label {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — was 0.5rem (8px) — CRITICAL FIX */
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .phase-pip.active .pip-dot {
+    background: var(--gold-bright);
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 6px rgba(232,180,74,0.5);
+    transform: scale(1.4);
+  }
+  .phase-pip.active .pip-label { color: var(--gold-bright); }
+  .phase-pip.done .pip-dot {
+    background: var(--gold-dim);
+    border-color: var(--gold-dim);
+  }
+  .phase-pip.done .pip-label { color: var(--gold-dim); }
+
+  .phase-bar-divider {
+    width: 1px;
+    height: 22px;
+    background: var(--border-gold);
+    flex-shrink: 0;
+  }
+
+  .quick-btns {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  /* Touch target: 44px tall */
+  .quick-btn {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — was 0.55rem (8.8px) — CRITICAL FIX */
+    color: var(--cp-blue-bright);
+    background: rgba(42,96,128,0.2);
+    border: 1px solid rgba(74,144,184,0.35);
+    padding: 0 0.6rem;
+    min-height: 44px;
+    cursor: pointer;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    white-space: nowrap;
+    text-align: center;
+    display: flex;
+    align-items: center;
+  }
+  .quick-btn:hover, .quick-btn.active-drawer {
+    background: rgba(42,96,128,0.4);
+    border-color: var(--cp-blue-bright);
+    color: #fff;
+  }
+
+  /* ═══════════════════════════════════════════
+     DRAWER OVERLAY
+     FIX: bottom accounts for safe area so drawer
+     content never hides behind home indicator
+  ═══════════════════════════════════════════ */
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 200;
+    display: none;
+  }
+  .drawer-overlay.open { display: block; }
+
+  .drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    /* 82dvh so drawer can't cover sticky header on short phones */
+    max-height: 82dvh;
+    max-height: 82vh; /* fallback */
+    background: var(--bg-dark);
+    border-top: 2px solid var(--cp-blue);
+    z-index: 201;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;  /* smooth momentum scroll on iOS */
+    transform: translateY(100%);
+    transition: transform 0.28s ease;
+  }
+  .drawer.open { transform: translateY(0); }
+
+  .drawer-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border-gold);
+    padding: 0.875rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+  }
+  .drawer-title {
+    font-family: var(--serif);
+    font-size: var(--text-md);  /* 16px — drawer heading */
+    font-weight: 700;
+    color: var(--cp-blue-bright);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  /* Touch target: 44px */
+  .drawer-close {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — close button label */
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border-gold);
+    padding: 0 0.75rem;
+    min-height: 44px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+  }
+  .drawer-close:hover { color: var(--gold-bright); border-color: var(--gold-bright); }
+
+  .drawer-content {
+    padding: 1rem 1.25rem;
+    /* Bottom padding clears safe area inside the scrollable area */
+    padding-bottom: calc(1.5rem + var(--safe-bottom));
+  }
+
+  /* ── KEYWORD SEARCH ── */
+  .keyword-search {
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-gold);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: var(--text-base); /* 15px — input text must be ≥16px on iOS to avoid auto-zoom;
+                                    15px is close enough with our explicit base font-size set */
+    padding: 0.6rem 0.875rem;
+    margin-bottom: 0.875rem;
+    outline: none;
+    letter-spacing: 0.04em;
+    /* iOS rounds inputs; flatten to match the theme */
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .keyword-search:focus { border-color: var(--gold-bright); }
+  .keyword-search::placeholder { color: var(--text-muted); }
+
+  /* ── OBJECTIVES BOX ── */
+  .obj-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 0.875rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(201,146,42,0.1);
+    align-items: start;
+  }
+  .obj-item:last-child { border-bottom: none; }
+  .obj-label {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — short label column */
+    color: var(--gold-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-top: 0.15rem;
+  }
+  .obj-value { font-size: var(--text-base); }
+
+  /* ── TAG ── */
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — keyword tag */
+    color: var(--text-muted);
+    border: 1px solid rgba(138,125,104,0.3);
+    padding: 0.05rem 0.35rem;
+    letter-spacing: 0.06em;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+  .tag.red { color: var(--red-bright); border-color: rgba(192,57,43,0.35); }
+
+  /* ── PHASE PREV/NEXT ── */
+  .phase-nav {
+    display: flex;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem 1.5rem;
+    max-width: 600px;
+  }
+  /* Touch target: 48px */
+  .phase-nav-btn {
+    flex: 1;
+    min-height: 48px;
+    padding: 0.75rem 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-gold);
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — prev/next label */
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phase-nav-btn:hover { color: var(--gold-bright); border-color: var(--gold-bright); background: var(--bg-panel); }
+  .phase-nav-btn.next {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    background: rgba(201,146,42,0.07);
+  }
+  .phase-nav-btn.next:hover { background: rgba(201,146,42,0.14); }
+  .phase-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── CP RESTRICTION BOX ── */
+  .strat-rules-box {
+    background: rgba(42,96,128,0.1);
+    border: 1px solid rgba(74,144,184,0.25);
+    padding: 0.875rem;
+    margin-bottom: 1rem;
+    font-size: var(--text-base);
+  }
+  .strat-rules-box .strat-rule-title {
+    font-family: var(--mono);
+    font-size: var(--text-xs);  /* 12px — box heading */
+    color: var(--cp-blue-bright);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); }
+
+  /* ═══════════════════════════════════════════
+     DESKTOP OVERRIDES (≥700px)
+  ═══════════════════════════════════════════ */
+  @media (min-width: 700px) {
+    :root {
+      --text-xs:   0.8125rem; /* 13px on desktop */
+      --text-sm:   0.875rem;  /* 14px */
+      --text-base: 0.9375rem; /* 15px — unchanged */
+      --text-md:   1rem;
+      --text-lg:   1.0625rem;
+    }
+    body { font-size: var(--text-base); }
+    .page-content { max-width: 680px; margin: 0 auto; }
+    .phase-nav { max-width: 680px; margin: 0 auto; }
+    #screen-home { align-items: center; }
+    .home-header {
+      max-width: 680px;
+      border: 1px solid var(--border-gold);
+      border-top: none;
+      margin-top: 0;
+      padding: 3rem 2rem 2rem;
+    }
+    .home-nav { max-width: 680px; }
+    .home-title { font-size: 1.6rem; }
+    .page-header { max-width: 100%; }
+    .move-tile p { font-size: 0.8125rem; } /* can be smaller on desktop since it's not a touch device */
+  }
+
+  /* ── UTILITIES ── */
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  .inline-code {
+    font-family: var(--mono);
+    font-size: 0.875em; /* relative em — shrinks proportionally with context */
+    color: var(--gold);
+    background: rgba(201,146,42,0.1);
+    padding: 0 0.3em;
+  }
+
+  .note {
+    font-family: var(--body);
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-top: 0.35rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  HOME                                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-header">
+    <div class="aquila">☩</div>
+    <div class="home-title">Warhammer 40,000<br>Field Manual</div>
+    <div class="home-subtitle">11th Edition · Core Rules Reference</div>
+  </div>
+  <div class="home-nav">
+    <div class="home-section-label">Game Turn — In Order</div>
+    <button class="phase-btn" onclick="goToPhase(0)">
+      <span class="phase-num">I</span>Command Phase
+    </button>
+    <button class="phase-btn" onclick="goToPhase(1)">
+      <span class="phase-num">II</span>Movement Phase
+    </button>
+    <button class="phase-btn" onclick="goToPhase(2)">
+      <span class="phase-num">III</span>Shooting Phase
+    </button>
+    <button class="phase-btn" onclick="goToPhase(3)">
+      <span class="phase-num">IV</span>Charge Phase
+    </button>
+    <button class="phase-btn" onclick="goToPhase(4)">
+      <span class="phase-num">V</span>Fight Phase
+    </button>
+
+    <div class="home-section-label">Quick Reference</div>
+    <button class="phase-btn ref-btn" onclick="showScreen('screen-stratagems')">
+      <span class="phase-num">CP</span>Universal Stratagems
+      <span class="cp-badge">9 stratagems</span>
+    </button>
+    <button class="phase-btn ref-btn" onclick="showScreen('screen-abilities')">
+      <span class="phase-num">KW</span>Core Abilities Glossary
+    </button>
+    <button class="phase-btn ref-btn" onclick="showScreen('screen-terrain')">
+      <span class="phase-num">⊞</span>Terrain &amp; Objectives
+    </button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PHASE I — COMMAND                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-phase-0" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">I. Command Phase</div>
+    <div class="page-phase-indicator">Phase 1 of 5</div>
+  </div>
+  <div class="page-content">
+
+    <div class="section-card">
+      <div class="section-title">Start of Phase</div>
+      <p>Resolve any abilities that trigger at the start of the Command phase.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Gain CP</div>
+      <p>Both players gain <strong style="color:var(--cp-blue-bright)">1 Command Point (CP)</strong>.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Battle-Shock</div>
+      <p>Make one roll for each unit that is <em>currently battle-shocked</em> OR <em>at or below half-strength</em> (models or wounds remaining).</p>
+      <div class="subsection-title">The Roll</div>
+      <p>Roll <span class="inline-code">2D6</span> and compare to the unit's Leadership (Ld) characteristic. Equal to or higher = pass.</p>
+      <div class="subsection-title">Battle-Shocked Result (on fail)</div>
+      <ul>
+        <li>OC characteristic becomes <span class="inline-code">—</span></li>
+        <li>Cannot be targeted by Stratagems</li>
+        <li>Cannot start or complete Actions</li>
+      </ul>
+      <div class="warn-box">
+        <strong>⚠ Half-Strength</strong>
+        A unit is at half-strength if the number of models (or wounds, for single-model units) remaining is at or below half the starting count for the battle.
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Command Abilities</div>
+      <p>Resolve any other Command phase rules — faction abilities, special rules, etc.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">End of Phase</div>
+      <p>Resolve any abilities that trigger at the end of the Command phase.</p>
+    </div>
+
+  </div>
+  <div class="phase-nav">
+    <button class="phase-nav-btn" disabled>← Previous</button>
+    <button class="phase-nav-btn next" onclick="goToPhase(1)">II. Movement →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PHASE II — MOVEMENT                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-phase-1" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">II. Movement Phase</div>
+    <div class="page-phase-indicator">Phase 2 of 5</div>
+  </div>
+  <div class="page-content">
+
+    <div class="section-card">
+      <div class="section-title">Move Types</div>
+      <div class="move-grid">
+        <div class="move-tile">
+          <div class="move-name">Normal Move</div>
+          <div class="move-stat">M"</div>
+          <p>Unit must be unengaged.</p>
+        </div>
+        <div class="move-tile">
+          <div class="move-name">Advance</div>
+          <div class="move-stat">M + D6"</div>
+          <p>Unengaged. Cannot charge or start action this turn.</p>
+        </div>
+        <div class="move-tile">
+          <div class="move-name">Fall Back</div>
+          <div class="move-stat">M"</div>
+          <p>Engaged units only. Cannot shoot, charge, or start action.</p>
+        </div>
+        <div class="move-tile">
+          <div class="move-name">Remain Stationary</div>
+          <div class="move-stat">—</div>
+          <p>Any unit. No restrictions.</p>
+        </div>
+      </div>
+
+      <div class="subsection-title">Fall Back — Modes</div>
+      <ul>
+        <li><strong style="color:var(--text-bright)">Ordered Retreat</strong> — only if not battle-shocked</li>
+        <li><strong style="color:var(--text-bright)">Desperate Escape</strong> — mandatory if battle-shocked; Hazard roll per model; can move through enemy models</li>
+      </ul>
+
+      <div class="warn-box">
+        <strong>⚠ Engagement Range</strong>
+        2" horizontal + 5" vertical.
+      </div>
+      <div class="warn-box">
+        <strong>⚠ Coherency Check (End of Turn)</strong>
+        Every model must be within 2" of ≥1 other model AND within 9" horizontal / 5" vertical of every other model in the unit.
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Flying &amp; Surging</div>
+      <ul>
+        <li><strong style="color:var(--text-bright)">Surge</strong> — when triggered, if not battle-shocked, unengaged, and has not moved this phase. Must move toward closest enemy.</li>
+        <li><strong style="color:var(--text-bright)">Take to the Skies</strong> — declare before moving; subtract 2" from max distance; can move through all models and terrain.</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Embarking</div>
+      <p>After a normal, advance, or fall-back move:</p>
+      <ul>
+        <li>All models must end within 3" of the transport</li>
+        <li>Unit must not have been set up this turn</li>
+        <li>Transport must have sufficient capacity</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Disembarking</div>
+      <ul>
+        <li><strong style="color:var(--text-bright)">Rapid</strong> — set up within 3"; transport made a normal or ingress move; cannot declare charge.</li>
+        <li><strong style="color:var(--text-bright)">Tactical</strong> — set up within 3"; transport stationary or not yet moved; unit then makes a normal or advance move.</li>
+        <li><strong style="color:var(--text-bright)">Combat</strong> — set up within 6"; any other circumstance; Hazard roll per model; battle-shocked; cannot charge.</li>
+        <li><strong style="color:var(--text-bright)">Emergency</strong> — transport was destroyed; Hazard roll per model; set up wholly within 6"; battle-shocked; cannot charge.</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Strategic Reserves &amp; Ingress</div>
+      <ul>
+        <li>Max 50% of points. Arrive from battle round 2 onwards.</li>
+        <li>Set up wholly within 6" of a battlefield edge, more than 8" from all enemies.</li>
+        <li>Before round 3: cannot set up in opponent's deployment zone.</li>
+        <li>Not arrived by end of battle round 3 = <strong style="color:var(--red-bright)">destroyed</strong> (except units in arrived transports and repositioned units).</li>
+      </ul>
+      <div class="warn-box">
+        <strong>⚠ After an Ingress Move</strong>
+        A unit that made an ingress move cannot make any other move until the start of the next Charge phase.
+      </div>
+    </div>
+
+  </div>
+  <div class="phase-nav">
+    <button class="phase-nav-btn" onclick="goToPhase(0)">← I. Command</button>
+    <button class="phase-nav-btn next" onclick="goToPhase(2)">III. Shooting →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PHASE III — SHOOTING                                       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-phase-2" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">III. Shooting Phase</div>
+    <div class="page-phase-indicator">Phase 3 of 5</div>
+  </div>
+  <div class="page-content">
+
+    <div class="section-card">
+      <div class="section-title">Shooting Types</div>
+      <ul>
+        <li><strong style="color:var(--text-bright)">Normal</strong> — unengaged, did not advance.</li>
+        <li><strong style="color:var(--text-bright)">Assault</strong> — unengaged, advanced; only <span class="tag">[ASSAULT]</span> weapons may be used.</li>
+        <li><strong style="color:var(--text-bright)">Close-Quarters</strong> — engaged, did not advance, has <span class="tag">[CLOSE-QUARTERS]</span> weapons or is MONSTER/VEHICLE.
+          <ul style="margin-top:0.3rem">
+            <li>Non-MONSTER/VEHICLE: [CLOSE-QUARTERS] weapons only; must target an engaged enemy unit.</li>
+            <li>MONSTER/VEHICLE: −1 to hit unless using [CLOSE-QUARTERS] vs engaged target. <span class="tag">[BLAST]</span> weapons cannot target engaged units.</li>
+          </ul>
+        </li>
+        <li><strong style="color:var(--text-bright)">Indirect</strong> — unengaged, did not advance, has <span class="tag">[INDIRECT FIRE]</span>; target need not be visible; target has BoC; cannot re-roll hits; unmodified 1–5 fail (1–3 if unit remained stationary and target visible to a friendly).</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Targeting Rules</div>
+      <ul>
+        <li>Normal/Assault: target must be visible, within range, and unengaged.</li>
+        <li>Engaged MONSTER/VEHICLE can be targeted; −1 to hit.</li>
+        <li>Different weapons on the same model may target different units; one weapon cannot be split across targets.</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Attack Sequence</div>
+      <div class="attack-flow">
+        <div class="attack-step">
+          <div class="attack-step-num">1</div>
+          <div>
+            <div class="attack-step-name">Hit Roll</div>
+            <p>Roll D6 ≥ BS/WS. Unmodified 1 always fails. Unmodified 6 = Critical Hit.</p>
+          </div>
+        </div>
+        <div class="attack-step">
+          <div class="attack-step-num">2</div>
+          <div>
+            <div class="attack-step-name">Wound Roll</div>
+            <p>Roll D6 vs S/T table. Unmodified 1 always fails. Unmodified 6 = Critical Wound.</p>
+          </div>
+        </div>
+        <div class="attack-step">
+          <div class="attack-step-num">3</div>
+          <div>
+            <div class="attack-step-name">Save Roll</div>
+            <p>D6 − AP vs Sv, or D6 vs InSv. Unmodified 1 always fails.</p>
+          </div>
+        </div>
+        <div class="attack-step">
+          <div class="attack-step-num">4</div>
+          <div>
+            <div class="attack-step-name">Damage</div>
+            <p>Model loses wounds equal to D characteristic. Excess damage is lost.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Wound Roll Table</div>
+      <table class="wound-table">
+        <thead>
+          <tr><th>Condition</th><th>Roll needed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S ≥ 2×T</td><td class="result">2+</td></tr>
+          <tr><td>S &gt; T</td><td class="result">3+</td></tr>
+          <tr><td>S = T</td><td class="result">4+</td></tr>
+          <tr><td>S &lt; T</td><td class="result">5+</td></tr>
+          <tr><td>S ≤ ½T</td><td class="result">6+</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Wound Allocation</div>
+      <p><strong style="color:var(--text-bright)">Groups:</strong> One group per CHARACTER; one group per matching Wounds/Sv/InSv set for non-CHARACTERs.</p>
+      <p><strong style="color:var(--text-bright)">Order:</strong> Wounded non-CHARACTER → unwounded non-CHARACTER → CHARACTER (last).</p>
+      <div class="warn-box">
+        <strong>⚠ CHARACTER Protection</strong>
+        No CHARACTER group may be allocated wounds before any non-CHARACTER group remains. Once all non-CHARACTERs are removed, wounds reach CHARACTERs normally.
+      </div>
+      <p>Work through saves lowest to highest. Within a group, select the model with lost wounds first.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Benefit of Cover (BoC)</div>
+      <p>Worsen the attacker's BS by 1 if every model in the target unit is INFANTRY / BEASTS / SWARM <em>within a terrain area</em> OR <em>not fully visible due to intervening terrain or obscuring area</em>.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Mortal Wounds &amp; Hazard Rolls</div>
+      <p><strong style="color:var(--text-bright)">Mortal Wounds:</strong> 1 MW = 1 wound lost, no saves. Inflicted after all normal damage from the same attack. FNP rolls can still be made.</p>
+      <p><strong style="color:var(--text-bright)">Hazard Roll:</strong> Roll D6. On 1–2: suffer 1 MW (or 3 MW if MONSTER/VEHICLE).</p>
+    </div>
+
+  </div>
+  <div class="phase-nav">
+    <button class="phase-nav-btn" onclick="goToPhase(1)">← II. Movement</button>
+    <button class="phase-nav-btn next" onclick="goToPhase(3)">IV. Charge →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PHASE IV — CHARGE                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-phase-3" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">IV. Charge Phase</div>
+    <div class="page-phase-indicator">Phase 4 of 5</div>
+  </div>
+  <div class="page-content">
+
+    <div class="section-card">
+      <div class="section-title">Declaring a Charge</div>
+      <ul>
+        <li>Targets must be within 12" (need not be visible).</li>
+        <li>Select all charge targets before rolling.</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Charge Roll</div>
+      <p>Roll <span class="inline-code">2D6</span> — this is the maximum distance of the charge move.</p>
+      <div class="subsection-title">Charge Move Conditions</div>
+      <ul>
+        <li>Each model must end <em>closer</em> to a charge target; within 1" if possible; engaged if possible.</li>
+        <li>Must end engaged with all declared charge targets.</li>
+        <li>Cannot end engaged with non-targets.</li>
+        <li>Each model in the charging unit gains <strong style="color:var(--gold-bright)">Fights First</strong>.</li>
+      </ul>
+    </div>
+
+  </div>
+  <div class="phase-nav">
+    <button class="phase-nav-btn" onclick="goToPhase(2)">← III. Shooting</button>
+    <button class="phase-nav-btn next" onclick="goToPhase(4)">V. Fight →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PHASE V — FIGHT                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-phase-4" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">V. Fight Phase</div>
+    <div class="page-phase-indicator">Phase 5 of 5</div>
+  </div>
+  <div class="page-content">
+
+    <div class="section-card">
+      <div class="section-title">1. Pile In</div>
+      <p>Both players; active player first.</p>
+      <ul>
+        <li>Up to 3" if engaged OR made a charge move OR was selected for an overrun fight.</li>
+        <li>Select targets first: every engaged enemy unit (if engaged); or ≥1 within 5" (if not).</li>
+        <li>Models in base contact cannot move. Each moved model must end closer to its closest target and engaged if possible.</li>
+        <li>Must end engaged. Each model that started engaged must remain engaged.</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">2. Fight Order</div>
+      <p><strong style="color:var(--text-bright)">Eligible:</strong> Engaged at start of Fight step, OR made a charge move.</p>
+      <div class="subsection-title">Step A — Fights First</div>
+      <p>Alternate selections; active player starts. Units with the Fights First keyword fight here.</p>
+      <div class="subsection-title">Step B — Remaining Combats</div>
+      <p>Start with the player who moved into this step; alternate selections.</p>
+      <div class="subsection-title">Fight Types</div>
+      <ul>
+        <li><strong style="color:var(--text-bright)">Normal Fight</strong> — unit is currently engaged.</li>
+        <li><strong style="color:var(--text-bright)">Overrun Fight</strong> — unit is unengaged (or was at start of step); one extra pile-in move, then fights.</li>
+      </ul>
+      <div class="warn-box">
+        <strong>⚠ New Fights First Units</strong>
+        If a Fights First unit becomes eligible during Remaining Combats, return to the Fights First step. When all eligible units are more than 5" from all enemies, a player may pass.
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">3. Consolidate</div>
+      <p>Both players; active player first. Up to 3" if the unit was eligible to fight this phase.</p>
+      <div class="subsection-title">Select mode (first applicable)</div>
+      <ul>
+        <li><strong style="color:var(--text-bright)">Ongoing</strong> — unit engaged. Stay engaged; move closer to enemies.</li>
+        <li><strong style="color:var(--text-bright)">Engaging</strong> — within 3" of enemies. Must end engaged; newly engaged enemy units that have not fought must fight next.</li>
+        <li><strong style="color:var(--text-bright)">Objective</strong> — within 3" of objective. Must end within range of it.</li>
+      </ul>
+    </div>
+
+  </div>
+  <div class="phase-nav">
+    <button class="phase-nav-btn" onclick="goToPhase(3)">← IV. Charge</button>
+    <button class="phase-nav-btn" disabled>End of Turn →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  STRATAGEMS                                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-stratagems" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">Universal Stratagems</div>
+    <div class="page-phase-indicator">Command Point Expenditure</div>
+  </div>
+  <div class="page-content">
+
+    <div class="strat-rules-box">
+      <div class="strat-rule-title">Using Stratagems</div>
+      <ul>
+        <li>Select targets → reduce CP by cost → resolve effect.</li>
+        <li>Cannot use the same stratagem more than once per phase.</li>
+        <li>Cannot target the same unit with more than one stratagem per phase (unless stated).</li>
+        <li>Additional cost sections (+1CP etc.) require that extra payment.</li>
+      </ul>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Command Re-Roll</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-both">Either Player's Turn</span>
+        Any phase
+      </div>
+      <p><strong>When:</strong> Just after making an Advance, Charge, Damage, Hazard, Hit, Save, Wound roll, or a roll to determine attacks for a friendly unit/model.</p>
+      <p><strong>Effect:</strong> Re-roll that roll. Rolling multiple dice: select one die. Charge rolls must be re-rolled in full.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Epic Challenge</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-your">Your Turn</span>
+        Fight phase
+      </div>
+      <p><strong>When:</strong> Just after a friendly CHARACTER unit is selected to fight.</p>
+      <p><strong>Effect:</strong> Select one CHARACTER model. Until end of phase, that model's melee weapons gain <span class="tag">[PRECISION]</span>.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Insane Bravery</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-your">Your Turn</span>
+        Command phase — Battle-Shock step
+      </div>
+      <p><strong>When:</strong> Just before making a battle-shock roll for a friendly unit.</p>
+      <p><strong>Effect:</strong> That battle-shock roll automatically succeeds.</p>
+      <p class="note">Once per battle.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Explosives</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-your">Your Turn</span>
+        Shooting phase
+      </div>
+      <p><strong>Target:</strong> One friendly unengaged EXPLOSIVES/GRENADES unit eligible to shoot that did not advance.</p>
+      <p><strong>Effect:</strong> Select one EXPLOSIVES/GRENADES model and one unengaged enemy unit within 8" and visible. Roll 6D6: each 4+ = 1 mortal wound on that enemy unit.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Crushing Impact</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-your">Your Turn</span>
+        Charge phase
+      </div>
+      <p><strong>When:</strong> Just after a friendly MONSTER/VEHICLE unit ends a charge move.</p>
+      <p><strong>Effect:</strong> Select one engaged enemy unit and one model in your unit engaged with it. Roll D6s equal to that model's T: each 1 = your unit suffers 1 MW; each 5+ = enemy suffers 1 MW (max 6 MW total).</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Rapid Ingress</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-opp">Opponent's Turn</span>
+        End of opponent's Movement phase
+      </div>
+      <p><strong>Target:</strong> One friendly unit in strategic reserves (excluding AIRCRAFT).</p>
+      <p><strong>Effect:</strong> Your unit makes an ingress move.</p>
+      <p class="note">Cannot be used during the first battle round.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Fire Overwatch</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-opp">Opponent's Turn</span>
+        End of opponent's Movement phase
+      </div>
+      <p><strong>Target:</strong> One friendly unengaged unit (excluding TITANIC).</p>
+      <p><strong>Effect:</strong> Snap shooting — target one visible enemy within 24". Hits only on unmodified 6; cannot re-roll hit rolls. Unit cannot start an action until end of phase.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Smokescreen</div>
+        <div class="strat-cost">1CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-opp">Opponent's Turn</span>
+        Start of opponent's Shooting phase
+      </div>
+      <p><strong>Target:</strong> One friendly SMOKE unit.</p>
+      <p><strong>Effect:</strong> Until end of phase, each time an attack targets your SMOKE unit, or a unit not fully visible due to your SMOKE unit, that target has Benefit of Cover.</p>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Heroic Intervention</div>
+        <div class="strat-cost">1–2CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-opp">Opponent's Turn</span>
+        End of opponent's Charge phase
+      </div>
+      <p><strong>Target:</strong> One friendly unengaged unit within 12" of one or more enemy units (VEHICLE only if CHARACTER/WALKER).</p>
+      <p><strong>Effect:</strong> Resolve a charge. Select mode before rolling:</p>
+      <ul>
+        <li><strong style="color:var(--cp-blue-bright)">Leap to Defend (1CP)</strong> — targets must be units that charged this phase and are within max distance.</li>
+        <li><strong style="color:var(--cp-blue-bright)">Into the Fray (2CP)</strong> — charge roll result over 6 becomes 6; targets can be any enemy within 6" and within max distance.</li>
+      </ul>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-name">Counteroffensive</div>
+        <div class="strat-cost">2CP</div>
+      </div>
+      <div class="strat-timing">
+        <span class="turn-badge turn-opp">Opponent's Turn</span>
+        Fight step of opponent's Fight phase
+      </div>
+      <p><strong>When:</strong> Just after an enemy unit has resolved its attacks.</p>
+      <p><strong>Target:</strong> One friendly unit eligible to fight.</p>
+      <p><strong>Effect:</strong> Until end of phase, your unit has Fights First and must be the next unit selected to fight.</p>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  CORE ABILITIES                                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-abilities" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">Core Abilities Glossary</div>
+    <div class="page-phase-indicator">Keyword Reference</div>
+  </div>
+  <div class="page-content">
+    <input type="text" class="keyword-search" id="ability-search" placeholder="Search keyword…" oninput="filterAbilities()" autocomplete="off">
+    <div id="ability-list" class="section-card" style="padding: 0.75rem 1rem;"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  TERRAIN & OBJECTIVES                                       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-terrain" class="screen">
+  <div class="page-header">
+    <button class="page-back" onclick="goHome()">Home</button>
+    <div class="page-title">Terrain &amp; Objectives</div>
+    <div class="page-phase-indicator">Reference</div>
+  </div>
+  <div class="page-content">
+
+    <div class="section-card">
+      <div class="section-title">Terrain — Movement by Category</div>
+      <div class="subsection-title">Exposed &amp; Light</div>
+      <p>All models can move freely horizontally and vertically.</p>
+      <div class="subsection-title">Dense</div>
+      <ul>
+        <li>INFANTRY / BEASTS / SWARM / MOBILE can move horizontally freely.</li>
+        <li>INFANTRY / BEASTS / SWARM can move vertically freely.</li>
+        <li>All others move horizontally through sections ≤ 2" height only; climb vertically through taller sections.</li>
+        <li>Cannot end on an elevated surface unless all models are INFANTRY / BEASTS / SWARM / FLY / MONSTER and no part of the base overhangs the outer edge.</li>
+      </ul>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Terrain — Visibility</div>
+      <div class="subsection-title">Solid (Dense Terrain)</div>
+      <p>LOS cannot cross enclosed gaps ≤ 3" from ground level.</p>
+      <div class="subsection-title">Obscuring Area</div>
+      <p>If every line of sight between two models crosses an obscuring area (and neither model is within it), they cannot see each other.</p>
+      <div class="subsection-title">Hidden</div>
+      <p>INFANTRY / BEASTS / SWARM inside a dense area that received no ranged attacks this turn or last. Only visible within 15".</p>
+      <div class="subsection-title">Plunging Fire</div>
+      <p>+1 to BS if attacker is on terrain ≥ 3" high, or has TOWERING and target is within 12".</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Actions</div>
+      <div class="subsection-title">A unit cannot start an Action if:</div>
+      <ul>
+        <li>Not on the battlefield</li>
+        <li>AIRCRAFT or FORTIFICATION unit</li>
+        <li>Battle-shocked</li>
+        <li>OC = 0 or —</li>
+        <li>Engaged (unless TITANIC)</li>
+        <li>Made an advance or fall-back move this turn</li>
+        <li>Already started another action this turn</li>
+      </ul>
+      <div class="subsection-title">Starting an Action</div>
+      <p>Unit is not eligible to shoot (except TITANIC) or declare a charge until the action ends or the turn ends.</p>
+      <div class="subsection-title">Action Fails to Complete if:</div>
+      <p>Unit makes any move (except pile-in/consolidation) or leaves the battlefield.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Objectives</div>
+      <div class="obj-item">
+        <div class="obj-label">Terrain Obj.</div>
+        <div class="obj-value">Objective = the terrain area itself. "Within range" = wholly within that area.</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-label">Marker Obj.</div>
+        <div class="obj-value">Within 3" horizontally and 5" vertically of the marker.</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-label">LOC</div>
+        <div class="obj-value">Total OC of all your models within range. Higher LOC controls; equal = contested.</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-label">Control</div>
+        <div class="obj-value">Assessed at end of each phase and each turn.</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-label">Secured</div>
+        <div class="obj-value">Objective remains controlled even with no models in range, until opponent's LOC exceeds yours at end of a phase.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  BOTTOM PHASE BAR                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="phase-bar">
+  <div class="phase-bar-inner">
+    <div class="phase-pip" data-phase="0" onclick="goToPhase(0)" title="Command">
+      <div class="pip-dot"></div>
+      <div class="pip-label">Cmd</div>
+    </div>
+    <div class="phase-pip" data-phase="1" onclick="goToPhase(1)" title="Movement">
+      <div class="pip-dot"></div>
+      <div class="pip-label">Mov</div>
+    </div>
+    <div class="phase-pip" data-phase="2" onclick="goToPhase(2)" title="Shooting">
+      <div class="pip-dot"></div>
+      <div class="pip-label">Sht</div>
+    </div>
+    <div class="phase-pip" data-phase="3" onclick="goToPhase(3)" title="Charge">
+      <div class="pip-dot"></div>
+      <div class="pip-label">Chg</div>
+    </div>
+    <div class="phase-pip" data-phase="4" onclick="goToPhase(4)" title="Fight">
+      <div class="pip-dot"></div>
+      <div class="pip-label">Fgt</div>
+    </div>
+    <div class="phase-bar-divider"></div>
+    <div class="quick-btns">
+      <button class="quick-btn" onclick="goHome()">Home</button>
+      <button class="quick-btn" id="btn-strat-drawer" onclick="toggleDrawer('drawer-strat')">Strats</button>
+      <button class="quick-btn" id="btn-ability-drawer" onclick="toggleDrawer('drawer-ability')">Abilities</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STRAT DRAWER ── -->
+<div class="drawer-overlay" id="overlay-drawer-strat" onclick="closeDrawer('drawer-strat')"></div>
+<div class="drawer" id="drawer-strat">
+  <div class="drawer-header">
+    <div class="drawer-title">Stratagems</div>
+    <button class="drawer-close" onclick="closeDrawer('drawer-strat')">CLOSE ✕</button>
+  </div>
+  <div class="drawer-content" id="drawer-strat-content"></div>
+</div>
+
+<!-- ── ABILITY DRAWER ── -->
+<div class="drawer-overlay" id="overlay-drawer-ability" onclick="closeDrawer('drawer-ability')"></div>
+<div class="drawer" id="drawer-ability">
+  <div class="drawer-header">
+    <div class="drawer-title">Core Abilities</div>
+    <button class="drawer-close" onclick="closeDrawer('drawer-ability')">CLOSE ✕</button>
+  </div>
+  <div class="drawer-content">
+    <input type="text" class="keyword-search" id="drawer-ability-search" placeholder="Search keyword…" oninput="filterDrawerAbilities()" autocomplete="off">
+    <div id="drawer-ability-list"></div>
+  </div>
+</div>
+
+<script>
+const PHASES = ['screen-phase-0','screen-phase-1','screen-phase-2','screen-phase-3','screen-phase-4'];
+let currentPhaseIndex = -1;
+
+const ABILITIES = [
+  {kw:'ANTI-X Y+', desc:'Unmodified wound roll of Y+ = Critical Wound vs models with keyword X.'},
+  {kw:'ASSAULT', desc:'Enables Assault Shooting after an Advance move.'},
+  {kw:'BLAST X', desc:'+X attack dice per 5 models in the target unit (round down).'},
+  {kw:'CLEAVE X', desc:'+X attack dice per 5 models in the target unit (round down).'},
+  {kw:'CLOSE-QUARTERS', desc:'Enables Close-Quarters Shooting (also counts as [PISTOL]).'},
+  {kw:'DEADLY DEMISE X', desc:'On destruction, roll D6; on 6, units within 6" suffer X MW. If X is random, roll per unit.'},
+  {kw:'DEEP STRIKE', desc:'Ingress move can be anywhere >8" from enemies, including opponent\'s deployment zone.'},
+  {kw:'DEVASTATING WOUNDS', desc:'Critical Wound → attack ends; target suffers MW equal to D characteristic. Max 1 model per Critical Wound; excess MW lost.'},
+  {kw:'EXTRA ATTACKS', desc:'When fighting: must use all [EXTRA ATTACKS] weapons plus one other melee weapon.'},
+  {kw:'FEEL NO PAIN X+', desc:'Each time model would lose a wound (including MW), roll D6: on X+, the wound is not lost.'},
+  {kw:'FIGHTS FIRST', desc:'Every model must have this keyword; unit fights in the Fights First step.'},
+  {kw:'FIRING DECK X', desc:'Select up to X embarked models; TRANSPORT gains their ranged weapons this phase. Those units cannot shoot this turn.'},
+  {kw:'HAZARDOUS', desc:'One Hazard roll per [HAZARDOUS] weapon used in the attack sequence.'},
+  {kw:'HEAVY', desc:'+1 to hit if unit is unengaged, was not set up this turn, and moved ≤ 3".'},
+  {kw:'HOVER', desc:'When taking to the skies, do not subtract 2" from maximum distance.'},
+  {kw:'IGNORES COVER', desc:'Target unit cannot use Benefit of Cover against attacks with this keyword.'},
+  {kw:'INDIRECT FIRE', desc:'Enables Indirect Shooting; target need not be visible.'},
+  {kw:'INFILTRATORS', desc:'Deploy >8" from opponent\'s deployment zone and all enemy units.'},
+  {kw:'LANCE', desc:'+1 to wound if the unit made a charge move this turn.'},
+  {kw:'LEADER / SUPPORT', desc:'Leader and Support each attach to one bodyguard unit (one Leader + one Support max per bodyguard). Bodyguard\'s T used for wound rolls.'},
+  {kw:'LETHAL HITS', desc:'Critical Hit → may auto-wound (no wound roll required; cannot result in a Critical Wound).'},
+  {kw:'LONE OPERATIVE', desc:'Not visible beyond 12". Cannot be targeted by [INDIRECT FIRE] beyond 12".'},
+  {kw:'MELTA X', desc:'If target is within half range when targets are selected, add X to the Damage characteristic.'},
+  {kw:'ONE SHOT', desc:'Once per battle. Revived models cannot re-use it.'},
+  {kw:'PRECISION', desc:'May select a visible CHARACTER allocation group as the current allocation group.'},
+  {kw:'PSYCHIC', desc:'May ignore modifiers to BS/WS and hit roll. Counts as a psychic attack.'},
+  {kw:'RAPID FIRE X', desc:'+X attack dice if the target is within half range when targets are selected.'},
+  {kw:'SCOUTS X"', desc:'Pre-battle: scout move up to X" (must end >8" from enemies) OR redeploy from reserves into own deployment zone.'},
+  {kw:'STEALTH', desc:'If every model in the unit has this: the unit has Benefit of Cover against all ranged attacks.'},
+  {kw:'SUPER-HEAVY WALKER', desc:'Move through models (not TITANIC); horizontal through terrain ≤ 4" high. May grant MOBILE for the move (on 1 after move ends: battle-shocked).'},
+  {kw:'SUSTAINED HITS X', desc:'Critical Hit generates X additional hits.'},
+  {kw:'TORRENT', desc:'Attacks automatically hit; no hit roll required.'},
+  {kw:'TWIN-LINKED', desc:'Re-roll the wound roll for attacks made with this weapon.'},
+];
+
+function renderAbilities(list) {
+  return list.map(a => `
+    <div class="ability-item">
+      <div class="ability-keyword"><span class="kw-bracket">[</span>${a.kw}<span class="kw-bracket">]</span></div>
+      <div class="ability-desc">${a.desc}</div>
+    </div>
+  `).join('');
+}
+
+function filterAbilities() {
+  const q = document.getElementById('ability-search').value.toLowerCase();
+  const filtered = q ? ABILITIES.filter(a => a.kw.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)) : ABILITIES;
+  document.getElementById('ability-list').innerHTML = renderAbilities(filtered);
+}
+
+function filterDrawerAbilities() {
+  const q = document.getElementById('drawer-ability-search').value.toLowerCase();
+  const filtered = q ? ABILITIES.filter(a => a.kw.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)) : ABILITIES;
+  document.getElementById('drawer-ability-list').innerHTML = renderAbilities(filtered);
+}
+
+document.getElementById('ability-list').innerHTML = renderAbilities(ABILITIES);
+document.getElementById('drawer-ability-list').innerHTML = renderAbilities(ABILITIES);
+
+const STRAT_SUMMARY_HTML = `
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Command Re-Roll</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-both">Either</span> Any phase, just after a roll</div>
+    <p>Re-roll one die (charge = full re-roll).</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Epic Challenge</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-your">Yours</span> Fight phase, CHARACTER selected</div>
+    <p>One CHARACTER model's melee weapons gain [PRECISION] until end of phase.</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Insane Bravery</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-your">Yours</span> Battle-Shock step</div>
+    <p>Auto-pass one battle-shock roll. <em>Once per battle.</em></p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Explosives</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-your">Yours</span> Shooting phase</div>
+    <p>EXPLOSIVES/GRENADES unit: roll 6D6 vs enemy within 8", each 4+ = 1 MW.</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Crushing Impact</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-your">Yours</span> Charge phase</div>
+    <p>After MONSTER/VEHICLE charges: roll D6s = T; each 5+ = 1 MW on enemy (max 6).</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Rapid Ingress</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-opp">Theirs</span> End of their Movement phase</div>
+    <p>Unit in Strategic Reserves makes an ingress move.</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Fire Overwatch</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-opp">Theirs</span> End of their Movement phase</div>
+    <p>Snap shoot at visible enemy within 24". Hits on unmodified 6 only.</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Smokescreen</div><div class="strat-cost">1CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-opp">Theirs</span> Start of their Shooting phase</div>
+    <p>SMOKE unit grants BoC to itself and units obscured by it until end of phase.</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Heroic Intervention</div><div class="strat-cost">1–2CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-opp">Theirs</span> End of their Charge phase</div>
+    <p><strong>Leap to Defend (1CP):</strong> charge units that charged this phase. <strong>Into the Fray (2CP):</strong> charge any enemy within 6"; result over 6 becomes 6.</p>
+  </div>
+  <div class="strat-card">
+    <div class="strat-header"><div class="strat-name">Counteroffensive</div><div class="strat-cost">2CP</div></div>
+    <div class="strat-timing"><span class="turn-badge turn-opp">Theirs</span> Their Fight phase, after enemy attacks</div>
+    <p>One eligible friendly unit gains Fights First and must fight next.</p>
+  </div>
+`;
+
+document.getElementById('drawer-strat-content').innerHTML = STRAT_SUMMARY_HTML;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+  const isPhase = id.startsWith('screen-phase-');
+  document.getElementById('phase-bar').classList.toggle('visible', isPhase);
+  if (isPhase) {
+    const idx = parseInt(id.replace('screen-phase-', ''));
+    currentPhaseIndex = idx;
+    updatePhaseBar(idx);
+  } else {
+    currentPhaseIndex = -1;
+  }
+}
+
+function goHome() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-home').classList.add('active');
+  document.getElementById('phase-bar').classList.remove('visible');
+  window.scrollTo(0, 0);
+  currentPhaseIndex = -1;
+}
+
+function goToPhase(n) {
+  showScreen('screen-phase-' + n);
+}
+
+function updatePhaseBar(activeIdx) {
+  document.querySelectorAll('.phase-pip').forEach(pip => {
+    const i = parseInt(pip.dataset.phase);
+    pip.classList.remove('active','done');
+    if (i === activeIdx) pip.classList.add('active');
+    else if (i < activeIdx) pip.classList.add('done');
+  });
+}
+
+function toggleDrawer(id) {
+  const drawer = document.getElementById(id);
+  const overlay = document.getElementById('overlay-' + id);
+  const isOpen = drawer.classList.contains('open');
+  closeAllDrawers();
+  if (!isOpen) {
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+    document.getElementById('btn-strat-drawer').classList.toggle('active-drawer', id === 'drawer-strat');
+    document.getElementById('btn-ability-drawer').classList.toggle('active-drawer', id === 'drawer-ability');
+  }
+}
+
+function closeDrawer(id) {
+  document.getElementById(id).classList.remove('open');
+  document.getElementById('overlay-' + id).classList.remove('open');
+  document.getElementById('btn-strat-drawer').classList.remove('active-drawer');
+  document.getElementById('btn-ability-drawer').classList.remove('active-drawer');
+}
+
+function closeAllDrawers() {
+  ['drawer-strat','drawer-ability'].forEach(id => {
+    document.getElementById(id).classList.remove('open');
+    document.getElementById('overlay-' + id).classList.remove('open');
+  });
+  document.getElementById('btn-strat-drawer').classList.remove('active-drawer');
+  document.getElementById('btn-ability-drawer').classList.remove('active-drawer');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAllDrawers();
+  if (e.key === 'ArrowRight' && currentPhaseIndex >= 0 && currentPhaseIndex < 4) goToPhase(currentPhaseIndex + 1);
+  if (e.key === 'ArrowLeft' && currentPhaseIndex > 0) goToPhase(currentPhaseIndex - 1);
+});
+</script>
+</body>
+</html>
